@@ -1,13 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { generateDesignImage } from '../services/geminiService';
 import { ImageSize } from '../types';
-import { RefreshCw, Download, Layers, Box, Cpu } from 'lucide-react';
+import { RefreshCw, Download, Layers, Box, Cpu, Key } from 'lucide-react';
 
 const ImageGenPage: React.FC = () => {
   const [prompt, setPrompt] = useState('');
   const [size, setSize] = useState<ImageSize>('1K');
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState(true);
+
+  useEffect(() => {
+    checkApiKey();
+  }, []);
+
+  const checkApiKey = async () => {
+    const aiStudio = (window as any).aistudio;
+    if (aiStudio) {
+      const hasKey = await aiStudio.hasSelectedApiKey();
+      setHasApiKey(hasKey);
+    }
+  };
+
+  const handleSelectKey = async () => {
+    const aiStudio = (window as any).aistudio;
+    if (aiStudio) {
+      await aiStudio.openSelectKey();
+      setHasApiKey(true);
+    }
+  };
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -15,8 +36,13 @@ const ImageGenPage: React.FC = () => {
     try {
       const result = await generateDesignImage(prompt, size);
       setGeneratedImage(result);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      const aiStudio = (window as any).aistudio;
+      if (err.message && err.message.includes("Requested entity was not found") && aiStudio) {
+        setHasApiKey(false);
+        await handleSelectKey();
+      }
     } finally {
       setLoading(false);
     }
@@ -86,14 +112,25 @@ const ImageGenPage: React.FC = () => {
                         />
                         <div className="mt-4 flex justify-between items-center">
                             <span className="font-mono text-[10px] text-gray-400">TOKENS: {prompt.length}</span>
-                            <button
-                                onClick={handleGenerate}
-                                disabled={loading || !prompt}
-                                className="px-8 py-3 bg-black text-white font-mono text-xs font-bold uppercase tracking-widest hover:bg-highlight transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                            >
-                                {loading ? <RefreshCw className="animate-spin" size={14} /> : <Cpu size={14} />}
-                                {loading ? 'Processing' : 'Generate'}
-                            </button>
+                            
+                            {!hasApiKey && (window as any).aistudio ? (
+                                <button
+                                    onClick={handleSelectKey}
+                                    className="px-8 py-3 bg-highlight text-white font-mono text-xs font-bold uppercase tracking-widest hover:bg-black transition-all flex items-center gap-2"
+                                >
+                                    <Key size={14} />
+                                    Connect Key
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={handleGenerate}
+                                    disabled={loading || !prompt}
+                                    className="px-8 py-3 bg-black text-white font-mono text-xs font-bold uppercase tracking-widest hover:bg-highlight transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                >
+                                    {loading ? <RefreshCw className="animate-spin" size={14} /> : <Cpu size={14} />}
+                                    {loading ? 'Processing' : 'Generate'}
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
