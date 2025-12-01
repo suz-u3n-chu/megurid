@@ -4,98 +4,89 @@ import { ArrowUpRight } from 'lucide-react';
 
 const PRODUCTS: Product[] = [
   {
-    id: '1',
-    name: 'UTSUWA (L)',
+    id: 'A-001',
+    name: 'UTSUWA / VOID',
     price: 3300,
     image: 'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=1760&auto=format&fit=crop',
-    description: 'A circle tray embodying the void.'
+    description: 'A circular tray designed to capture light and shadow.'
   },
   {
-    id: '2',
-    name: 'KUBOMI',
+    id: 'A-002',
+    name: 'KUBOMI / ASH',
     price: 3100,
     image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=1740&auto=format&fit=crop',
-    description: 'Ashtray designed to catch light.'
+    description: 'Minimalist receptacle. Industrial finish.'
   },
   {
-    id: '3',
-    name: 'FUNE',
+    id: 'B-001',
+    name: 'FUNE / VESSEL',
     price: 2400,
     image: 'https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?q=80&w=1740&auto=format&fit=crop',
-    description: 'Oval tray for life\'s artifacts.'
+    description: 'Elongated form inspired by ancient vessels.'
   },
   {
-      id: '4',
-      name: 'ISHI',
+      id: 'C-003',
+      name: 'ISHI / BLOCK',
       price: 4500,
       image: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=1610&auto=format&fit=crop',
-      description: 'Solid block paperweight.'
+      description: 'Solid concrete block. Pure weight.'
   }
 ];
 
 const ProductGrid: React.FC = () => {
   return (
-    <section className="py-32 bg-white">
+    <section className="bg-paper py-32 border-b border-border">
       <div className="container mx-auto px-6 md:px-12">
         
-        {/* Section Header */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-20 border-b border-concrete-200 pb-8">
-          <div>
-            <h2 className="text-4xl md:text-5xl font-serif text-concrete-900 mb-2">Collection</h2>
-            <p className="text-xs tracking-[0.2em] text-concrete-500 uppercase">Handcrafted in Tokyo</p>
-          </div>
-          <button className="hidden md:flex items-center gap-2 text-xs font-bold tracking-widest uppercase hover:opacity-60 transition-opacity">
-            View All Items <ArrowUpRight size={14} />
-          </button>
+        <div className="flex justify-between items-end mb-20">
+            <h2 className="text-5xl md:text-7xl font-serif font-bold tracking-tight">
+                Collection.
+            </h2>
+            <span className="font-mono text-xs hidden md:block text-right">
+                INDEX OF ARTIFACTS<br/>
+                VOL. 1.0 — 2025
+            </span>
         </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {PRODUCTS.map((product, index) => (
-            <div 
-                key={product.id} 
-                className="group cursor-pointer flex flex-col"
-                style={{ marginTop: index % 2 !== 0 ? '4rem' : '0' }} // Staggered grid effect
-            >
-              <div className="relative aspect-[3/4] overflow-hidden bg-concrete-100 mb-6">
-                <div className="absolute inset-0 bg-concrete-200 animate-pulse"></div>
-                <img 
-                  src={product.image} 
-                  alt={product.name}
-                  className="relative z-10 w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-110 grayscale group-hover:grayscale-0"
-                />
-                
-                {/* Overlay Action */}
-                <div className="absolute inset-0 z-20 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
-                    <span className="bg-white text-black px-6 py-2 text-[10px] tracking-widest uppercase font-bold transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                        View Details
-                    </span>
-                </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-24">
+          {PRODUCTS.map((product) => (
+            <div key={product.id} className="group cursor-pointer">
+              {/* Card Header */}
+              <div className="flex justify-between items-center border-b border-black pb-2 mb-4">
+                 <span className="font-mono text-xs font-bold">{product.id}</span>
+                 <ArrowUpRight className="opacity-0 group-hover:opacity-100 transition-opacity transform group-hover:translate-x-1 group-hover:-translate-y-1 duration-300" size={18} />
               </div>
 
-              <div className="space-y-1">
-                <div className="flex justify-between items-center border-b border-transparent group-hover:border-concrete-200 pb-2 transition-colors duration-500">
-                    <h3 className="text-lg font-serif tracking-wider text-concrete-900">
-                    {product.name}
-                    </h3>
-                    <span className="text-xs tracking-widest text-concrete-500 group-hover:text-black transition-colors">
-                    ¥{product.price.toLocaleString()}
-                    </span>
-                </div>
-                <p className="text-[10px] text-concrete-400 tracking-wide line-clamp-1">
-                    {product.description}
-                </p>
+              {/* Image Container */}
+              <div className="relative aspect-[4/5] overflow-hidden bg-subtle mb-6">
+                 <img 
+                    src={product.image} 
+                    alt={product.name}
+                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                 />
+                 
+                 {/* Hover Overlay Info */}
+                 <div className="absolute inset-0 bg-white/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-8 flex flex-col justify-center items-center text-center">
+                    <p className="font-serif text-2xl italic mb-4">{product.description}</p>
+                    <div className="font-mono text-[10px] space-y-1 text-gray-500 uppercase">
+                        <p>Material: Reinforced Concrete</p>
+                        <p>Weight: 1.2kg (Approx)</p>
+                        <p>Origin: Tokyo, JP</p>
+                    </div>
+                    <button className="mt-8 px-6 py-2 bg-black text-white font-mono text-xs uppercase hover:bg-highlight transition-colors">
+                        Add to Cart
+                    </button>
+                 </div>
+              </div>
+
+              {/* Product Info */}
+              <div className="flex justify-between items-baseline">
+                <h3 className="text-2xl font-serif">{product.name}</h3>
+                <span className="font-mono text-sm">¥{product.price.toLocaleString()}</span>
               </div>
             </div>
           ))}
         </div>
-        
-        <div className="mt-16 text-center md:hidden">
-            <button className="inline-flex items-center gap-2 text-xs font-bold tracking-widest uppercase border-b border-black pb-1">
-                View All Items <ArrowUpRight size={14} />
-            </button>
-        </div>
-
       </div>
     </section>
   );

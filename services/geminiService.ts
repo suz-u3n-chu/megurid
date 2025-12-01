@@ -13,7 +13,7 @@ export const getChatResponse = async (message: string, history: { role: string, 
       chatSession = ai.chats.create({
         model: 'gemini-3-pro-preview',
         config: {
-          systemInstruction: "You are the AI concierge for MEGURID, a high-end concrete lifestyle brand. Your tone is sophisticated, minimalist, helpful, and polite. You appreciate 'wabi-sabi' (beauty in imperfection). You answer questions about products, shipping, and the philosophy of concrete. Keep answers concise.",
+          systemInstruction: "You are 'The Architect' of MEGURID DESIGN LAB. You are an intellectual, precise, and sophisticated entity. You speak with the clarity of a blueprint and the depth of a philosopher. You value structure, whitespace, and material honesty (wabi-sabi). You assist users in navigating the intersection of concrete craftsmanship and AI design. Your tone is professional yet artistically inspired. Keep responses concise and structured.",
         },
         history: history.map(h => ({
             role: h.role,
@@ -23,19 +23,16 @@ export const getChatResponse = async (message: string, history: { role: string, 
     }
 
     const response = await chatSession.sendMessage({ message });
-    return response.text || "申し訳ありません。現在応答できません。";
+    return response.text || "Structure undefined.";
   } catch (error) {
     console.error("Chat Error:", error);
-    return "申し訳ありません。エラーが発生しました。";
+    return "Connection to the grid unstable.";
   }
 };
 
 // --- Image Generation Service ---
 export const generateDesignImage = async (prompt: string, size: ImageSize): Promise<string> => {
   try {
-    // Handling 1K, 2K, 4K strings to map if necessary, but API accepts them as strings 
-    // strictly "1K", "2K", "4K" based on docs for gemini-3-pro-image-preview
-    
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-image-preview',
       contents: {
@@ -56,7 +53,7 @@ export const generateDesignImage = async (prompt: string, size: ImageSize): Prom
         return `data:image/png;base64,${base64EncodeString}`;
       }
     }
-    throw new Error("No image data returned");
+    throw new Error("Render pipeline failed.");
   } catch (error) {
     console.error("Image Gen Error:", error);
     throw error;

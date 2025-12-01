@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, ArrowUp, Zap } from 'lucide-react';
+import { MessageSquare, X, Send, Activity } from 'lucide-react';
 import { ChatMessage } from '../types';
 import { getChatResponse } from '../services/geminiService';
 
@@ -9,7 +9,7 @@ const ChatWidget: React.FC = () => {
     {
       id: 'init',
       role: 'model',
-      text: 'MEGURIDへようこそ。\n製品の詳細やブランドフィロソフィーについて、AIコンシェルジュがお答えします。',
+      text: 'Greetings. I am The Architect. How may I assist in structuring your vision today?',
       timestamp: new Date()
     }
   ]);
@@ -68,90 +68,76 @@ const ChatWidget: React.FC = () => {
 
   return (
     <>
-      {/* Minimal Trigger */}
+      {/* Trigger Button */}
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-6 right-6 z-40 w-12 h-12 flex items-center justify-center rounded-full shadow-lg transition-all duration-500 ease-out border border-white/20 backdrop-blur-md ${
-          isOpen 
-            ? 'bg-concrete-900 text-white rotate-90 scale-90' 
-            : 'bg-black text-white hover:scale-110 hover:bg-concrete-800'
-        }`}
+        className={`fixed bottom-8 right-8 z-50 w-16 h-16 bg-white border-2 border-black flex items-center justify-center shadow-[6px_6px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0px_#000] transition-all duration-200 ${isOpen ? 'bg-black text-white border-black' : 'text-black'}`}
       >
-        {isOpen ? <X size={20} /> : <MessageCircle size={20} strokeWidth={1.5} />}
+        {isOpen ? <X size={24} /> : <MessageSquare size={24} />}
       </button>
 
-      {/* Elegant Chat Window */}
+      {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-40 w-[350px] md:w-[400px] h-[600px] max-h-[80vh] bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden animate-fade-up border border-concrete-100">
+        <div className="fixed bottom-28 right-4 md:right-8 z-40 w-[95vw] md:w-[400px] h-[500px] bg-white border-2 border-black shadow-[12px_12px_0px_rgba(0,0,0,0.1)] flex flex-col animate-fade-up">
           
           {/* Header */}
-          <div className="bg-white p-6 border-b border-concrete-100 flex justify-between items-center sticky top-0 z-10">
-            <div>
-                <h3 className="font-serif font-bold text-concrete-900 tracking-wider text-lg">CONCIERGE</h3>
-                <div className="flex items-center gap-1.5 mt-1">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                    </span>
-                    <p className="text-[10px] text-concrete-500 uppercase tracking-widest font-medium">Online • Gemini 3.0</p>
-                </div>
+          <div className="bg-subtle p-4 border-b-2 border-black flex justify-between items-center">
+            <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="font-mono text-xs font-bold uppercase tracking-wider">The Architect</span>
             </div>
+            <Activity size={14} className="text-gray-400" />
           </div>
 
-          {/* Messages Area */}
-          <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 bg-[#fafafa]">
+          {/* Messages */}
+          <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 bg-paper">
             {messages.map((msg) => (
               <div 
                 key={msg.id} 
                 className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
               >
                 <div 
-                  className={`max-w-[85%] p-4 text-sm leading-7 tracking-wide shadow-sm ${
+                  className={`max-w-[85%] p-4 text-sm font-mono border ${
                     msg.role === 'user' 
-                      ? 'bg-concrete-900 text-white rounded-2xl rounded-tr-sm' 
-                      : 'bg-white text-concrete-800 border border-concrete-100 rounded-2xl rounded-tl-sm'
+                      ? 'bg-black text-white border-black rounded-tr-none' 
+                      : 'bg-white text-black border-gray-300 rounded-tl-none shadow-sm'
                   }`}
                 >
-                  {msg.text.split('\n').map((line, i) => <p key={i} className={i > 0 ? 'mt-2' : ''}>{line}</p>)}
+                  <p className="leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                 </div>
-                <span className="text-[10px] text-concrete-400 mt-2 px-1">
-                    {msg.role === 'model' ? 'MEGURID AI' : 'YOU'}
+                <span className="text-[10px] text-gray-400 mt-1 uppercase tracking-wider">
+                    {msg.role === 'model' ? 'System' : 'You'} • {msg.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                 </span>
               </div>
             ))}
             
             {isLoading && (
-              <div className="flex items-start">
-                 <div className="bg-white border border-concrete-100 p-4 rounded-2xl rounded-tl-sm shadow-sm flex items-center space-x-3">
-                    <Zap size={14} className="animate-pulse text-concrete-400" />
-                    <span className="text-xs text-concrete-500 tracking-wider">Generating response...</span>
-                 </div>
+              <div className="flex items-center gap-1 text-gray-400 font-mono text-xs pl-2">
+                 <span>Calculating structure</span>
+                 <span className="animate-bounce">.</span><span className="animate-bounce delay-75">.</span><span className="animate-bounce delay-150">.</span>
               </div>
             )}
           </div>
 
-          {/* Input Area */}
-          <div className="p-4 bg-white border-t border-concrete-100">
+          {/* Input */}
+          <div className="p-4 bg-white border-t-2 border-black">
             <div className="relative">
-              <input 
-                type="text" 
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Type your question..."
-                className="w-full bg-concrete-50 border border-concrete-200 rounded-full pl-6 pr-12 py-4 text-sm focus:outline-none focus:border-concrete-900 focus:ring-1 focus:ring-concrete-900 transition-all placeholder:text-concrete-400"
-              />
-              <button 
-                onClick={handleSend}
-                disabled={isLoading || !inputText.trim()}
-                className="absolute right-2 top-2 p-2 bg-concrete-900 text-white rounded-full hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                <ArrowUp size={18} />
-              </button>
+                <input 
+                    type="text" 
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Ask about design or structure..."
+                    className="w-full pl-4 pr-12 py-3 bg-subtle border border-gray-300 focus:border-black focus:outline-none font-mono text-sm transition-colors"
+                    autoFocus
+                />
+                <button 
+                    onClick={handleSend}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 hover:bg-gray-200 rounded-full transition-colors"
+                >
+                    <Send size={16} />
+                </button>
             </div>
-            <p className="text-[10px] text-center text-concrete-400 mt-3">
-                AI can make mistakes. Please verify important information.
-            </p>
           </div>
         </div>
       )}
