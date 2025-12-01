@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MEGURID | Concrete & Design</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@200;300;400;500;700&family=Cinzel:wght@400;500;600;800&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,400&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Noto Sans JP"', 'sans-serif'],
+              serif: ['"Cinzel"', 'serif'],
+              elegant: ['"Cormorant Garamond"', 'serif'],
+            },
+            colors: {
+              concrete: {
+                50: '#f9f9f9',
+                100: '#f0f0f0',
+                200: '#e2e2e2',
+                300: '#cfcfcf',
+                400: '#b0b0b0',
+                500: '#909090',
+                600: '#707070',
+                700: '#505050',
+                800: '#303030',
+                900: '#1a1a1a',
+                950: '#0f0f0f',
+              }
+            },
+            animation: {
+              'fade-up': 'fadeUp 1s ease-out forwards',
+              'fade-in': 'fadeIn 1.5s ease-out forwards',
+            },
+            keyframes: {
+              fadeUp: {
+                '0%': { opacity: '0', transform: 'translateY(20px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        background-color: #f9f9f9;
+        color: #1a1a1a;
+      }
+      /* Custom Scrollbar for Webkit */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f0f0f0; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #b0b0b0; 
+        border-radius: 0px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #707070; 
+      }
+      
+      .text-vertical {
+        writing-mode: vertical-rl;
+        text-orientation: upright;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
