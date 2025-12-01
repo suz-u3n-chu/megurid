@@ -4,8 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MEGURID | DESIGN LAB</title>
+    
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,900;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Configuration -->
     <script>
       tailwind.config = {
         theme: {
@@ -36,8 +49,24 @@
         }
       }
     </script>
+
+    <!-- Import Map for Google GenAI (ESM) -->
+    <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.run/@google/genai",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+    "vite": "https://aistudiocdn.com/vite@^7.2.6",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1"
+  }
+}
+</script>
+
     <style>
-      /* Custom Styles moved from index.css for immediate preview support */
+      /* Global Custom Styles */
       body {
           background-color: #ffffff;
           color: #000000;
@@ -52,7 +81,7 @@
           width: 100vw;
           height: 100vh;
           pointer-events: none;
-          z-index: 9999;
+          z-index: 40;
           opacity: 0.03;
           background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
       }
@@ -78,32 +107,857 @@
           color: #ffffff;
       }
 
-      /* Utilities */
       .writing-vertical {
         writing-mode: vertical-rl;
         text-orientation: mixed;
       }
     </style>
-    <script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/client": "https://aistudiocdn.com/react-dom@^19.2.0/client",
-    "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0",
-    "react/jsx-runtime": "https://aistudiocdn.com/react@^19.2.0/jsx-runtime",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "vite": "https://aistudiocdn.com/vite@^7.2.6",
-    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1"
-  }
-}
-</script>
   </head>
   <body>
     <div class="noise-overlay"></div>
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+
+    <!-- Main Application Script -->
+    <script type="text/babel" data-type="module">
+      import { GoogleGenAI } from "@google/genai";
+
+      const { useState, useEffect, useRef } = React;
+
+      // --- Icons (SVG Components to avoid external dependency issues) ---
+      const Icons = {
+        Menu: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>,
+        X: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
+        ShoppingBag: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>,
+        ArrowDown: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>,
+        ArrowUpRight: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>,
+        MessageSquare: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
+        Send: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>,
+        Activity: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>,
+        RefreshCw: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>,
+        Download: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>,
+        Layers: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>,
+        Box: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" x2="12" y1="22.08" y2="12"/></svg>,
+        Cpu: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg>,
+        Key: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>,
+        Maximize2: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" x2="14" y1="3" y2="10"/><line x1="3" x2="10" y1="21" y2="14"/></svg>
+      };
+
+      // --- Services ---
+      const getChatResponse = async (message, history) => {
+        try {
+          // Note: In a real app, API key should be handled securely. 
+          // For this client-side demo, we assume the environment var or prompt.
+          const apiKey = process.env.API_KEY || ''; 
+          if (!apiKey && (!window.aistudio || !await window.aistudio.hasSelectedApiKey())) {
+             return "Access denied. API Key required.";
+          }
+          
+          const ai = new GoogleGenAI({ apiKey: apiKey || (await window.aistudio.getApiKey()) });
+          const chatSession = ai.chats.create({
+            model: 'gemini-3-pro-preview',
+            config: {
+              systemInstruction: "You are 'The Architect' of MEGURID DESIGN LAB. You are an intellectual, precise, and sophisticated entity. You speak with the clarity of a blueprint and the depth of a philosopher. You value structure, whitespace, and material honesty (wabi-sabi). You assist users in navigating the intersection of concrete craftsmanship and AI design. Your tone is professional yet artistically inspired. Keep responses concise and structured.",
+            },
+            history: history.map(h => ({
+                role: h.role,
+                parts: h.parts
+            }))
+          });
+
+          const response = await chatSession.sendMessage({ message });
+          return response.text || "Structure undefined.";
+        } catch (error) {
+          console.error("Chat Error:", error);
+          return "Connection to the grid unstable.";
+        }
+      };
+
+      const generateDesignImage = async (prompt, size) => {
+        try {
+          // Check for API key (Simulated environment check)
+          const apiKey = process.env.API_KEY; 
+          
+          const ai = new GoogleGenAI({ apiKey: apiKey });
+          const response = await ai.models.generateContent({
+            model: 'gemini-3-pro-image-preview',
+            contents: {
+              parts: [{ text: prompt }]
+            },
+            config: {
+              imageConfig: {
+                imageSize: size, 
+                aspectRatio: "1:1"
+              }
+            }
+          });
+
+          for (const part of response.candidates?.[0]?.content?.parts || []) {
+            if (part.inlineData) {
+              const base64EncodeString = part.inlineData.data;
+              return `data:image/png;base64,${base64EncodeString}`;
+            }
+          }
+          throw new Error("Render pipeline failed.");
+        } catch (error) {
+          console.error("Image Gen Error:", error);
+          throw error;
+        }
+      };
+
+      // --- Components ---
+
+      // Header
+      const Header = ({ currentView, onNavigate }) => {
+        const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+        return (
+          <React.Fragment>
+            <header className="fixed top-0 w-full z-50 bg-paper/80 backdrop-blur-md border-b border-border">
+              <div className="container mx-auto px-6 h-20 flex items-center justify-between">
+                
+                {/* Logo */}
+                <div 
+                  className="cursor-pointer group flex items-center gap-3"
+                  onClick={() => onNavigate('HOME')}
+                >
+                  <div className="w-8 h-8 bg-black flex items-center justify-center text-white font-serif font-bold text-xl group-hover:rotate-180 transition-transform duration-500">
+                      M
+                  </div>
+                  <h1 className="text-xl font-mono font-bold tracking-tighter uppercase hidden md:block">
+                    MEGURID® <span className="text-[10px] font-normal text-gray-500 ml-2">DESIGN_LAB</span>
+                  </h1>
+                </div>
+
+                {/* Desktop Nav */}
+                <nav className="hidden md:flex items-center h-full">
+                  <button 
+                      onClick={() => onNavigate('HOME')}
+                      className={`h-full px-8 border-l border-border font-mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors flex items-center gap-2 ${currentView === 'HOME' ? 'bg-black text-white' : 'text-black'}`}
+                  >
+                      [01] Gallery
+                  </button>
+                  <button 
+                      onClick={() => onNavigate('GENERATE')}
+                      className={`h-full px-8 border-l border-r border-border font-mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors flex items-center gap-2 ${currentView === 'GENERATE' ? 'bg-black text-white' : 'text-black'}`}
+                  >
+                      [02] Laboratory
+                  </button>
+                </nav>
+
+                {/* Actions */}
+                <div className="flex items-center gap-6 font-mono text-xs">
+                  <button className="hidden md:block hover:underline underline-offset-4 uppercase tracking-widest">
+                    Account
+                  </button>
+                  <button className="relative hover:text-highlight transition-colors flex items-center gap-2">
+                    <Icons.ShoppingBag size={18} />
+                    <span className="hidden md:inline uppercase tracking-widest">Cart(0)</span>
+                  </button>
+                  <button 
+                    className="md:hidden"
+                    onClick={() => setMobileMenuOpen(true)}
+                  >
+                    <Icons.Menu size={24} />
+                  </button>
+                </div>
+              </div>
+            </header>
+
+            {/* Mobile Menu */}
+            {mobileMenuOpen && (
+              <div className="fixed inset-0 z-[60] bg-paper flex flex-col p-6 animate-fade-up">
+                   <div className="flex justify-between items-center mb-12">
+                      <span className="font-mono text-xs text-gray-500">MENU_OVERLAY</span>
+                      <button 
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="w-10 h-10 border border-black flex items-center justify-center hover:bg-black hover:text-white transition-colors"
+                      >
+                          <Icons.X size={20} />
+                      </button>
+                   </div>
+
+                  <nav className="flex flex-col gap-6">
+                      <button 
+                          onClick={() => { onNavigate('HOME'); setMobileMenuOpen(false); }}
+                          className="text-5xl font-serif text-left hover:italic transition-all border-b border-gray-100 pb-4"
+                      >
+                          Gallery
+                      </button>
+                      <button 
+                          onClick={() => { onNavigate('GENERATE'); setMobileMenuOpen(false); }}
+                          className="text-5xl font-serif text-left hover:italic transition-all border-b border-gray-100 pb-4"
+                      >
+                          Laboratory
+                      </button>
+                  </nav>
+                  
+                  <div className="mt-auto font-mono text-[10px] text-gray-400">
+                      MEGURID SYSTEM V4.0<br/>
+                      ALL SYSTEMS NOMINAL
+                  </div>
+              </div>
+            )}
+          </React.Fragment>
+        );
+      };
+
+      // Hero
+      const Hero = ({ onNavigate }) => {
+        const [scrollY, setScrollY] = useState(0);
+
+        useEffect(() => {
+          const handleScroll = () => setScrollY(window.scrollY);
+          window.addEventListener('scroll', handleScroll);
+          return () => window.removeEventListener('scroll', handleScroll);
+        }, []);
+
+        return (
+          <section className="relative w-full h-screen flex flex-col justify-center overflow-hidden bg-paper">
+              
+              {/* Background Grids */}
+              <div className="absolute inset-0 z-0 pointer-events-none" 
+                   style={{ 
+                       backgroundImage: 'linear-gradient(to right, #f4f4f5 1px, transparent 1px), linear-gradient(to bottom, #f4f4f5 1px, transparent 1px)',
+                       backgroundSize: '80px 80px'
+                   }}>
+              </div>
+
+              {/* Content */}
+              <div className="container mx-auto px-6 md:px-12 relative z-10 grid grid-cols-1 md:grid-cols-12 gap-8 items-center h-full">
+                  
+                  {/* Text Area */}
+                  <div className="md:col-span-7 flex flex-col justify-center">
+                      <div className="mb-6 flex items-center gap-4">
+                          <div className="h-[1px] w-12 bg-black"></div>
+                          <span className="font-mono text-xs tracking-[0.3em] uppercase">Est. 2025 Tokyo</span>
+                      </div>
+                      
+                      <h1 className="text-7xl md:text-[10rem] font-serif font-black leading-[0.85] tracking-tighter mb-8 mix-blend-exclusion">
+                          MEGU<br/>RID<span className="text-highlight">.</span>
+                      </h1>
+
+                      <p className="font-mono text-sm md:text-base text-gray-600 max-w-md leading-loose mb-12">
+                          Where brutalist aesthetics meet generative intelligence. <br/>
+                          Exploration of form, void, and code.
+                      </p>
+
+                      <button 
+                          onClick={() => onNavigate('GENERATE')}
+                          className="w-fit px-10 py-5 bg-black text-white font-mono text-xs font-bold uppercase tracking-widest hover:bg-highlight transition-colors duration-300 shadow-[8px_8px_0px_#e4e4e7] hover:shadow-[4px_4px_0px_#000]"
+                      >
+                          Enter Laboratory
+                      </button>
+                  </div>
+
+                  {/* Visual Area */}
+                  <div className="md:col-span-5 h-[50vh] md:h-[70vh] relative mt-12 md:mt-0 group">
+                      <div className="absolute inset-0 border border-black transform translate-x-4 translate-y-4 transition-transform duration-500 group-hover:translate-x-2 group-hover:translate-y-2"></div>
+                      <div className="absolute inset-0 bg-gray-100 overflow-hidden">
+                          <img 
+                              src="https://images.unsplash.com/photo-1596489396328-57d472c95454?q=80&w=2670&auto=format&fit=crop"
+                              alt="Concrete Minimal"
+                              className="w-full h-full object-cover grayscale contrast-125 hover:grayscale-0 transition-all duration-1000"
+                              style={{ transform: `scale(${1 + scrollY * 0.0005})` }}
+                          />
+                      </div>
+                      <div className="absolute bottom-4 right-4 bg-white px-3 py-1 font-mono text-[10px] border border-black">
+                          FIG. 001 // MAIN_STRUCT
+                      </div>
+                  </div>
+              </div>
+
+              {/* Scroll Indicator */}
+              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 mix-blend-multiply">
+                  <span className="font-mono text-[10px] tracking-widest uppercase writing-vertical">Scroll</span>
+                  <Icons.ArrowDown className="animate-bounce" size={16} />
+              </div>
+          </section>
+        );
+      };
+
+      // Philosophy
+      const Philosophy = () => {
+        return (
+          <section className="py-32 bg-paper border-b border-border">
+            <div className="container mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-12 gap-12">
+              
+              {/* Title Column */}
+              <div className="md:col-span-4 sticky top-32 h-fit">
+                  <span className="font-mono text-xs text-highlight tracking-widest block mb-4">/// MANIFESTO</span>
+                  <h2 className="text-6xl md:text-8xl font-serif font-bold leading-none tracking-tight">
+                      Solid<br/>Form.
+                  </h2>
+              </div>
+
+              {/* Content Column */}
+              <div className="md:col-span-8 space-y-24">
+                  
+                  <div className="border-t border-black pt-8">
+                      <h3 className="font-mono text-xl mb-6">[01] THE WEIGHT</h3>
+                      <p className="text-xl md:text-2xl font-serif leading-relaxed text-gray-800">
+                          We believe in the honesty of material. Concrete is liquid stone; it captures the very moment of its creation. In a world of transient digital pixels, we crave the permanent, heavy silence of stone.
+                      </p>
+                  </div>
+
+                  <div className="border-t border-border pt-8">
+                      <h3 className="font-mono text-xl mb-6 text-gray-500">[02] THE ALGORITHM</h3>
+                      <p className="text-lg font-mono leading-relaxed text-gray-600 text-justify">
+                          Yet, we do not reject the machine. We embrace Artificial Intelligence as the new chisel. Our designs are born from the collision of generative code and artisanal hand-pouring. The chaos of the algorithm frozen in the calm of cement.
+                      </p>
+                  </div>
+
+                  <div className="relative h-[60vh] w-full overflow-hidden grayscale">
+                      <img 
+                          src="https://images.unsplash.com/photo-1518390937839-4bb42023a808?q=80&w=2574&auto=format&fit=crop" 
+                          alt="Philosophy"
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-1000"
+                      />
+                      <div className="absolute bottom-0 left-0 bg-white p-4 font-mono text-xs">
+                          FIG. 01: RAW MATERIAL STUDY
+                      </div>
+                  </div>
+
+              </div>
+            </div>
+          </section>
+        );
+      };
+
+      // Product Grid (with Lightbox)
+      const ProductGrid = () => {
+        const [selectedImage, setSelectedImage] = useState(null);
+
+        const PRODUCTS = [
+          {
+            id: 'A-001',
+            name: 'UTSUWA / VOID',
+            price: 3300,
+            image: 'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=1760&auto=format&fit=crop',
+            description: 'A circular tray designed to capture light and shadow.'
+          },
+          {
+            id: 'A-002',
+            name: 'KUBOMI / ASH',
+            price: 3100,
+            image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=1740&auto=format&fit=crop',
+            description: 'Minimalist receptacle. Industrial finish.'
+          },
+          {
+            id: 'B-001',
+            name: 'FUNE / VESSEL',
+            price: 2400,
+            image: 'https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?q=80&w=1740&auto=format&fit=crop',
+            description: 'Elongated form inspired by ancient vessels.'
+          },
+          {
+              id: 'C-003',
+              name: 'ISHI / BLOCK',
+              price: 4500,
+              image: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=1610&auto=format&fit=crop',
+              description: 'Solid concrete block. Pure weight.'
+          }
+        ];
+
+        return (
+          <section className="bg-paper py-32 border-b border-border">
+            <div className="container mx-auto px-6 md:px-12">
+              
+              <div className="flex justify-between items-end mb-20">
+                  <h2 className="text-5xl md:text-7xl font-serif font-bold tracking-tight">
+                      Collection.
+                  </h2>
+                  <span className="font-mono text-xs hidden md:block text-right">
+                      INDEX OF ARTIFACTS<br/>
+                      VOL. 1.0 — 2025
+                  </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-24">
+                {PRODUCTS.map((product) => (
+                  <div key={product.id} className="group cursor-pointer">
+                    {/* Card Header */}
+                    <div className="flex justify-between items-center border-b border-black pb-2 mb-4">
+                       <span className="font-mono text-xs font-bold">{product.id}</span>
+                       <Icons.ArrowUpRight className="opacity-0 group-hover:opacity-100 transition-opacity transform group-hover:translate-x-1 group-hover:-translate-y-1 duration-300" size={18} />
+                    </div>
+
+                    {/* Image Container */}
+                    <div 
+                      className="relative aspect-[4/5] overflow-hidden bg-subtle mb-6"
+                      onClick={() => setSelectedImage(product.image)}
+                    >
+                       <img 
+                          src={product.image} 
+                          alt={product.name}
+                          className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                       />
+                       
+                       {/* Hover Overlay Info */}
+                       <div className="absolute inset-0 bg-white/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-8 flex flex-col justify-center items-center text-center">
+                          <Icons.Maximize2 size={32} className="mb-4 text-black opacity-50" />
+                          <p className="font-serif text-2xl italic mb-4">{product.description}</p>
+                          <div className="font-mono text-[10px] space-y-1 text-gray-500 uppercase">
+                              <p>Material: Reinforced Concrete</p>
+                              <p>Weight: 1.2kg (Approx)</p>
+                              <p>Origin: Tokyo, JP</p>
+                          </div>
+                          <button 
+                            className="mt-8 px-6 py-2 bg-black text-white font-mono text-xs uppercase hover:bg-highlight transition-colors"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                console.log("Add to cart");
+                            }}
+                          >
+                              Add to Cart
+                          </button>
+                       </div>
+                    </div>
+
+                    {/* Product Info */}
+                    <div className="flex justify-between items-baseline">
+                      <h3 className="text-2xl font-serif">{product.name}</h3>
+                      <span className="font-mono text-sm">¥{product.price.toLocaleString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Lightbox Overlay */}
+            {selectedImage && (
+              <div 
+                className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 animate-fade-up"
+                onClick={() => setSelectedImage(null)}
+              >
+                <button 
+                    className="absolute top-8 right-8 text-white hover:text-highlight transition-colors"
+                    onClick={() => setSelectedImage(null)}
+                >
+                    <Icons.X size={40} />
+                </button>
+                <img 
+                    src={selectedImage} 
+                    alt="Detail View" 
+                    className="max-w-full max-h-[90vh] object-contain shadow-2xl"
+                    onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            )}
+          </section>
+        );
+      };
+
+      // Image Gen Page
+      const ImageGenPage = () => {
+        const [prompt, setPrompt] = useState('');
+        const [size, setSize] = useState('1K');
+        const [generatedImage, setGeneratedImage] = useState(null);
+        const [loading, setLoading] = useState(false);
+        const [hasApiKey, setHasApiKey] = useState(true);
+
+        useEffect(() => {
+          checkApiKey();
+        }, []);
+
+        const checkApiKey = async () => {
+          if (window.aistudio) {
+            const hasKey = await window.aistudio.hasSelectedApiKey();
+            setHasApiKey(hasKey);
+          }
+        };
+
+        const handleSelectKey = async () => {
+          if (window.aistudio) {
+            await window.aistudio.openSelectKey();
+            setHasApiKey(true);
+          }
+        };
+
+        const handleGenerate = async () => {
+          if (!prompt.trim()) return;
+          setLoading(true);
+          try {
+            const result = await generateDesignImage(prompt, size);
+            setGeneratedImage(result);
+          } catch (err) {
+            console.error(err);
+            if (err.message && err.message.includes("Requested entity was not found") && window.aistudio) {
+              setHasApiKey(false);
+              await handleSelectKey();
+            }
+          } finally {
+            setLoading(false);
+          }
+        };
+
+        return (
+          <div className="min-h-screen bg-paper pt-24 pb-12">
+            <div className="container mx-auto px-6 md:px-12">
+              
+              {/* Page Header */}
+              <div className="flex flex-col md:flex-row justify-between items-end mb-12 border-b border-black pb-6">
+                  <div>
+                      <span className="font-mono text-xs text-highlight tracking-widest uppercase mb-2 block">/// Beta Version 2.0</span>
+                      <h2 className="text-4xl md:text-6xl font-serif font-bold">Design Laboratory</h2>
+                  </div>
+                  <div className="font-mono text-xs text-right mt-4 md:mt-0 text-gray-500">
+                      AI-ASSISTED PROTOTYPING<br/>
+                      MODEL: GEMINI-3-PRO
+                  </div>
+              </div>
+
+              <div className="flex flex-col lg:flex-row gap-12">
+                  
+                  {/* Controls */}
+                  <div className="w-full lg:w-1/3 space-y-8">
+                      
+                      {/* Panel 1: Settings */}
+                      <div className="bg-subtle border border-border p-6 relative">
+                          <div className="absolute top-0 left-0 bg-black text-white px-2 py-1 font-mono text-[10px] uppercase">
+                              01. Configuration
+                          </div>
+                          
+                          <div className="mt-6 space-y-6">
+                              <div>
+                                  <label className="font-mono text-xs font-bold block mb-3 uppercase">Resolution</label>
+                                  <div className="grid grid-cols-3 gap-2">
+                                      {['1K', '2K', '4K'].map((s) => (
+                                          <button
+                                              key={s}
+                                              onClick={() => setSize(s)}
+                                              className={`py-3 font-mono text-xs border transition-all ${
+                                                  size === s 
+                                                  ? 'border-black bg-black text-white shadow-[4px_4px_0px_#ccc]' 
+                                                  : 'border-gray-300 bg-white hover:border-black'
+                                              }`}
+                                          >
+                                              {s}
+                                          </button>
+                                      ))}
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+
+                      {/* Panel 2: Input */}
+                      <div className="bg-white border border-black p-6 relative shadow-[8px_8px_0px_#e4e4e7]">
+                          <div className="absolute top-0 left-0 bg-highlight text-white px-2 py-1 font-mono text-[10px] uppercase">
+                              02. Prompt Engineering
+                          </div>
+                          
+                          <div className="mt-6">
+                              <textarea
+                                  value={prompt}
+                                  onChange={(e) => setPrompt(e.target.value)}
+                                  placeholder="Describe the form, material, and lighting..."
+                                  className="w-full h-48 bg-subtle border border-gray-300 p-4 font-mono text-sm focus:outline-none focus:border-black resize-none transition-colors"
+                              />
+                              <div className="mt-4 flex justify-between items-center">
+                                  <span className="font-mono text-[10px] text-gray-400">TOKENS: {prompt.length}</span>
+                                  
+                                  {!hasApiKey && window.aistudio ? (
+                                      <button
+                                          onClick={handleSelectKey}
+                                          className="px-8 py-3 bg-highlight text-white font-mono text-xs font-bold uppercase tracking-widest hover:bg-black transition-all flex items-center gap-2"
+                                      >
+                                          <Icons.Key size={14} />
+                                          Connect Key
+                                      </button>
+                                  ) : (
+                                      <button
+                                          onClick={handleGenerate}
+                                          disabled={loading || !prompt}
+                                          className="px-8 py-3 bg-black text-white font-mono text-xs font-bold uppercase tracking-widest hover:bg-highlight transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                      >
+                                          {loading ? <Icons.RefreshCw className="animate-spin" size={14} /> : <Icons.Cpu size={14} />}
+                                          {loading ? 'Processing' : 'Generate'}
+                                      </button>
+                                  )}
+                              </div>
+                          </div>
+                      </div>
+
+                      {/* Status Log */}
+                      <div className="font-mono text-[10px] text-gray-400 border-t border-dashed border-gray-300 pt-4">
+                          > SYSTEM READY<br/>
+                          > WAITING FOR INPUT...
+                      </div>
+                  </div>
+
+                  {/* Viewport */}
+                  <div className="w-full lg:w-2/3">
+                      <div className="w-full aspect-square bg-white border border-border relative flex items-center justify-center overflow-hidden">
+                          {/* Grid Background */}
+                          <div className="absolute inset-0 pointer-events-none opacity-20" 
+                              style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
+                          </div>
+
+                          {generatedImage ? (
+                              <div className="relative w-full h-full p-12 animate-fade-up">
+                                  <img 
+                                      src={generatedImage} 
+                                      alt="Generated Blueprint" 
+                                      className="w-full h-full object-contain drop-shadow-xl"
+                                  />
+                                  
+                                  <div className="absolute bottom-6 right-6 flex gap-2">
+                                      <a 
+                                          href={generatedImage} 
+                                          download="megurid-design.png"
+                                          className="p-3 bg-white border border-black hover:bg-black hover:text-white transition-colors shadow-[4px_4px_0px_rgba(0,0,0,0.1)]"
+                                      >
+                                          <Icons.Download size={20} />
+                                      </a>
+                                  </div>
+                              </div>
+                          ) : (
+                              <div className="flex flex-col items-center text-gray-300">
+                                  <Icons.Box size={64} strokeWidth={1} />
+                                  <span className="font-mono text-sm mt-4 tracking-widest">NO ARTIFACT RENDERED</span>
+                              </div>
+                          )}
+
+                          {/* Technical Overlays */}
+                          <div className="absolute top-4 left-4 font-mono text-[10px] flex items-center gap-2 text-gray-500">
+                              <Icons.Layers size={12} />
+                              LAYER: RENDER_PASS_01
+                          </div>
+                          <div className="absolute top-4 right-4 font-mono text-[10px] text-gray-500">
+                              SCALE 1:1
+                          </div>
+                      </div>
+                  </div>
+
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      // Chat Widget
+      const ChatWidget = () => {
+        const [isOpen, setIsOpen] = useState(false);
+        const [messages, setMessages] = useState([
+          {
+            id: 'init',
+            role: 'model',
+            text: 'Greetings. I am The Architect. How may I assist in structuring your vision today?',
+            timestamp: new Date()
+          }
+        ]);
+        const [inputText, setInputText] = useState('');
+        const [isLoading, setIsLoading] = useState(false);
+        const scrollRef = useRef(null);
+
+        useEffect(() => {
+          if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+          }
+        }, [messages, isOpen]);
+
+        const handleSend = async () => {
+          if (!inputText.trim() || isLoading) return;
+
+          const userMsg = {
+            id: Date.now().toString(),
+            role: 'user',
+            text: inputText,
+            timestamp: new Date()
+          };
+
+          setMessages(prev => [...prev, userMsg]);
+          setInputText('');
+          setIsLoading(true);
+
+          try {
+              const history = messages.map(m => ({
+                  role: m.role,
+                  parts: [{ text: m.text }]
+              }));
+              
+              const responseText = await getChatResponse(userMsg.text, history);
+
+              const aiMsg = {
+                  id: (Date.now() + 1).toString(),
+                  role: 'model',
+                  text: responseText,
+                  timestamp: new Date()
+              };
+              setMessages(prev => [...prev, aiMsg]);
+          } catch (err) {
+              console.error(err);
+          } finally {
+              setIsLoading(false);
+          }
+        };
+
+        const handleKeyDown = (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+          }
+        };
+
+        return (
+          <React.Fragment>
+            {/* Trigger Button */}
+            <button 
+              onClick={() => setIsOpen(!isOpen)}
+              className={`fixed bottom-8 right-8 z-50 w-16 h-16 bg-white border-2 border-black flex items-center justify-center shadow-[6px_6px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0px_#000] transition-all duration-200 ${isOpen ? 'bg-black text-white border-black' : 'text-black'}`}
+            >
+              {isOpen ? <Icons.X size={24} /> : <Icons.MessageSquare size={24} />}
+            </button>
+
+            {/* Chat Window */}
+            {isOpen && (
+              <div className="fixed bottom-28 right-4 md:right-8 z-40 w-[95vw] md:w-[400px] h-[500px] bg-white border-2 border-black shadow-[12px_12px_0px_rgba(0,0,0,0.1)] flex flex-col animate-fade-up">
+                
+                {/* Header */}
+                <div className="bg-subtle p-4 border-b-2 border-black flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="font-mono text-xs font-bold uppercase tracking-wider">The Architect</span>
+                  </div>
+                  <Icons.Activity size={14} className="text-gray-400" />
+                </div>
+
+                {/* Messages */}
+                <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 bg-paper">
+                  {messages.map((msg) => (
+                    <div 
+                      key={msg.id} 
+                      className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
+                    >
+                      <div 
+                        className={`max-w-[85%] p-4 text-sm font-mono border ${
+                          msg.role === 'user' 
+                            ? 'bg-black text-white border-black rounded-tr-none' 
+                            : 'bg-white text-black border-gray-300 rounded-tl-none shadow-sm'
+                        }`}
+                      >
+                        <p className="leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                      </div>
+                      <span className="text-[10px] text-gray-400 mt-1 uppercase tracking-wider">
+                          {msg.role === 'model' ? 'System' : 'You'} • {msg.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </span>
+                    </div>
+                  ))}
+                  
+                  {isLoading && (
+                    <div className="flex items-center gap-1 text-gray-400 font-mono text-xs pl-2">
+                       <span>Calculating structure</span>
+                       <span className="animate-bounce">.</span><span className="animate-bounce delay-75">.</span><span className="animate-bounce delay-150">.</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Input */}
+                <div className="p-4 bg-white border-t-2 border-black">
+                  <div className="relative">
+                      <input 
+                          type="text" 
+                          value={inputText}
+                          onChange={(e) => setInputText(e.target.value)}
+                          onKeyDown={handleKeyDown}
+                          placeholder="Ask about design or structure..."
+                          className="w-full pl-4 pr-12 py-3 bg-subtle border border-gray-300 focus:border-black focus:outline-none font-mono text-sm transition-colors"
+                          autoFocus
+                      />
+                      <button 
+                          onClick={handleSend}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-2 hover:bg-gray-200 rounded-full transition-colors"
+                      >
+                          <Icons.Send size={16} />
+                      </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </React.Fragment>
+        );
+      };
+
+      // Footer
+      const Footer = () => {
+        return (
+          <footer className="bg-white text-black pt-24 pb-8 overflow-hidden">
+            <div className="container mx-auto px-6 md:px-12">
+              
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-24 border-t border-black pt-12">
+                  <div className="md:col-span-2">
+                       <h3 className="font-serif text-3xl mb-6">Stay informed.</h3>
+                       <div className="flex border-b border-black pb-2 max-w-md">
+                          <input type="email" placeholder="Email Address" className="w-full bg-transparent focus:outline-none font-mono text-sm placeholder:text-gray-400" />
+                          <button className="font-mono text-xs font-bold hover:text-highlight transition-colors">SUBSCRIBE</button>
+                       </div>
+                  </div>
+
+                  <div className="space-y-4 font-mono text-xs uppercase tracking-widest">
+                      <a href="#" className="block hover:underline">Instagram</a>
+                      <a href="#" className="block hover:underline">Twitter / X</a>
+                      <a href="#" className="block hover:underline">Pinterest</a>
+                  </div>
+
+                  <div className="space-y-4 font-mono text-xs uppercase tracking-widest">
+                      <a href="#" className="block hover:underline">Shipping & Returns</a>
+                      <a href="#" className="block hover:underline">Privacy Policy</a>
+                      <a href="#" className="block hover:underline">Terms of Service</a>
+                  </div>
+              </div>
+
+              <div className="flex flex-col md:flex-row justify-between items-end border-t border-border pt-8">
+                  <h1 className="text-[15vw] leading-[0.8] font-serif font-black tracking-tighter select-none opacity-10 md:opacity-100 transition-opacity">
+                      MEGURID
+                  </h1>
+                  
+                  <div className="font-mono text-[10px] text-gray-500 mb-2 md:mb-8 text-right">
+                      © 2025 MEGURID INC. TOKYO<br/>
+                      DESIGNED BY THE ARCHITECT
+                  </div>
+              </div>
+            </div>
+          </footer>
+        );
+      };
+
+      // Main App
+      const App = () => {
+        const [currentView, setCurrentView] = useState('HOME');
+
+        useEffect(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, [currentView]);
+
+        return (
+          <div className="min-h-screen flex flex-col font-sans bg-paper text-ink selection:bg-ink selection:text-paper">
+            <Header currentView={currentView} onNavigate={setCurrentView} />
+
+            <main className="flex-grow pt-20">
+              <div className={`transition-opacity duration-700 ${currentView === 'HOME' ? 'opacity-100 block' : 'opacity-0 hidden'}`}>
+                   <Hero onNavigate={setCurrentView} />
+                   <Philosophy />
+                   <ProductGrid />
+              </div>
+
+              {currentView === 'GENERATE' && (
+                <div className="animate-fade-up">
+                   <ImageGenPage />
+                </div>
+              )}
+            </main>
+
+            <ChatWidget />
+            {currentView !== 'GENERATE' && <Footer />}
+          </div>
+        );
+      };
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(
+        <React.StrictMode>
+          <App />
+        </React.StrictMode>
+      );
+    </script>
   </body>
 </html>
